@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hunter vs Duck Battle</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="game-container" id="gameContainer">
+      <div class="hud">
+        <div>Hunter Health: <span id="hunterHealth">100</span></div>
+        <div>Duck Health: <span id="duckHealth">100</span></div>
+        <div>Score: <span id="score">0</span></div>
+        <div class="sound-controls">
+          <button id="muteBtn" class="mute-btn">🔊 Sound On</button>
+        </div>
+      </div>
+
+      <div class="hunter" id="hunter"></div>
+      <div class="duck" id="duck"></div>
+
+      <div class="game-over" id="gameOver">
+        <div id="gameOverText">Game Over!</div>
+        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+      </div>
+
+      <div class="instructions">
+        Click to shoot bullets at the duck<br />
+        Duck shoots back automatically<br />
+        Survive as long as possible!
+      </div>
+    </div>
+
+    <!-- Audio elements (hidden) -->
+    <audio id="bulletSound" preload="auto">
+      <source src="bullet.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="duckShotSound" preload="auto">
+      <source src="duck-shot.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="explosionSound" preload="auto">
+      <source src="explosion.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+  </body>
+</html>

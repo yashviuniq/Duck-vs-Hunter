@@ -1,0 +1,219 @@
+body {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #87ceeb 0%, #98fb98 100%);
+  font-family: "Arial", sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  cursor: crosshair;
+}
+
+.hunter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  background: #8b4513;
+  border-radius: 50% 50% 0 0;
+  transition: transform 0.1s;
+  z-index: 10;
+}
+
+.hunter::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  background: #deb887;
+  border-radius: 50%;
+}
+
+.hunter::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: -30px;
+  width: 40px;
+  height: 8px;
+  background: #654321;
+  border-radius: 4px;
+  transform-origin: left center;
+}
+
+.duck {
+  position: absolute;
+  width: 60px;
+  height: 40px;
+  background: #ffd700;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.duck::before {
+  content: "";
+  position: absolute;
+  left: -15px;
+  top: 5px;
+  width: 20px;
+  height: 15px;
+  background: #ffa500;
+  border-radius: 50% 0 50% 50%;
+}
+
+.duck::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 10px;
+  width: 25px;
+  height: 20px;
+  background: #ffd700;
+  border-radius: 0 50% 50% 0;
+}
+
+.bullet {
+  position: absolute;
+  width: 4px;
+  height: 12px;
+  background: #ff4500;
+  border-radius: 2px;
+  z-index: 5;
+}
+
+.duck-projectile {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #32cd32;
+  border-radius: 50%;
+  z-index: 5;
+}
+
+.explosion {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(
+    circle,
+    #ff6b35 0%,
+    #f7931e 50%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: explode 0.5s ease-out forwards;
+  z-index: 15;
+}
+
+@keyframes explode {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 10px;
+  min-width: 200px;
+}
+
+.hud div {
+  margin-bottom: 8px;
+}
+
+.hud div:last-child {
+  margin-bottom: 0;
+}
+
+.sound-controls {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.mute-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.mute-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  font-size: 24px;
+  z-index: 200;
+  display: none;
+  min-width: 300px;
+}
+
+.restart-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.3s;
+}
+
+.restart-btn:hover {
+  background: #45a049;
+}
+
+.instructions {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  color: white;
+  font-size: 14px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-align: right;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 10px;
+  max-width: 250px;
+}
