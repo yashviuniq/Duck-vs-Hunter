@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunter vs Duck Battle</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+
+        .hunter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: #8B4513;
+            border-radius: 50% 50% 0 0;
+            transition: transform 0.1s;
+        }
+
+        .hunter::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background: #DEB887;
+            border-radius: 50%;
+        }
+
+        .hunter::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -30px;
+            width: 40px;
+            height: 8px;
+            background: #654321;
+            border-radius: 4px;
+            transform-origin: left center;
+        }
+
+        .duck {
+            position: absolute;
+            width: 60px;
+            height: 40px;
+            background: #FFD700;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .duck::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 5px;
+            width: 20px;
+            height: 15px;
+            background: #FFA500;
+            border-radius: 50% 0 50% 50%;
+        }
+
+        .duck::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: 10px;
+            width: 25px;
+            height: 20px;
+            background: #FFD700;
+            border-radius: 0 50% 50% 0;
+        }
+
+        .bullet {
+            position: absolute;
+            width: 4px;
+            height: 12px;
+            background: #FF4500;
+            border-radius: 2px;
+            transition: none;
+        }
+
+        .duck-projectile {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #32CD32;
+            border-radius: 50%;
+            transition: none;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #FF6B35 0%, #F7931E 50%, transparent 70%);
+            border-radius: 50%;
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 24px;
+            z-index: 200;
+            display: none;
+        }
+
+        .restart-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .restart-btn:hover {
+            background: #45a049;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="hud">
+            <div>Hunter Health: <span id="hunterHealth">100</span></div>
+            <div>Duck Health: <span id="duckHealth">100</span></div>
+            <div>Score: <span id="score">0</span></div>
+        </div>
+
+        <div class="hunter" id="hunter"></div>
+        <div class="duck" id="duck"></div>
+
+        <div class="game-over" id="gameOver">
+            <div id="gameOverText">Game Over!</div>
+            <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        </div>
+
+        <div class="instructions">
+            Click to shoot bullets at the duck<br>
+            Duck shoots back automatically<br>
+            Survive as long as possible!
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            hunterHealth: 100,
+            duckHealth: 100,
+            score: 0,
+            gameActive: true,
+            bullets: [],
+            duckProjectiles: [],
+            duckPosition: { x: 200, y: 100 },
+            duckDirection: { x: 2, y: 1 }
+        };
+
+        const gameContainer = document.getElementById('gameContainer');
+        const hunter = document.getElementById('hunter');
+        const duck = document.getElementById('duck');
+        const gameOver = document.getElementById('gameOver');
+
+        // Initialize duck position
+        duck.style.left = gameState.duckPosition.x + 'px';
+        duck.style.top = gameState.duckPosition.y + 'px';
+
+        // Hunter shooting
+        gameContainer.addEventListener('click', (e) => {
+            if (!gameState.gameActive) return;
+            
+            const hunterRect = hunter.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            const startX = hunterRect.left + hunterRect.width/2 - containerRect.left;
+            const startY = hunterRect.top - containerRect.top;
+            const targetX = e.clientX - containerRect.left;
+            const targetY = e.clientY - containerRect.top;
+            
+            shootBullet(startX, startY, targetX, targetY);
+        });
+
+        function shootBullet(startX, startY, targetX, targetY) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.left = startX + 'px';
+            bullet.style.top = startY + 'px';
+            gameContainer.appendChild(bullet);
+
+            const angle = Math.atan2(targetY - startY, targetX - startX);
+            const speed = 8;
+            const velocityX = Math.cos(angle) * speed;
+            const velocityY = Math.sin(angle) * speed;
+
+            gameState.bullets.push({
+                element: bullet,
+                x: startX,
+                y: startY,
+                vx: velocityX,
+                vy: velocityY
+            });
+        }
+
+        function duckShoot() {
+            if (!gameState.gameActive) return;
+
+            const duckRect = duck.getBoundingClientRect();
+            const hunterRect = hunter.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            const startX = duckRect.left + duckRect.width/2 - containerRect.left;
+            const startY = duckRect.top + duckRect.height/2 - containerRect.top;
+            const targetX = hunterRect.left + hunterRect.width/2 - containerRect.left;
+            const targetY = hunterRect.top + hunterRect.height/2 - containerRect.top;
+
+            const projectile = document.createElement('div');
+            projectile.className = 'duck-projectile';
+            projectile.style.left = startX + 'px';
+            projectile.style.top = startY + 'px';
+            gameContainer.appendChild(projectile);
+
+            const angle = Math.atan2(targetY - startY, targetX - startX);
+            const speed = 4;
+            const velocityX = Math.cos(angle) * speed;
+            const velocityY = Math.sin(angle) * speed;
+
+            gameState.duckProjectiles.push({
+                element: projectile,
+                x: startX,
+                y: startY,
+                vx: velocityX,
+                vy: velocityY
+            });
+        }
+
+        function updateDuck() {
+            if (!gameState.gameActive) return;
+
+            // Move duck
+            gameState.duckPosition.x += gameState.duckDirection.x;
+            gameState.duckPosition.y += gameState.duckDirection.y;
+
+            // Bounce off walls
+            if (gameState.duckPosition.x <= 0 || gameState.duckPosition.x >= window.innerWidth - 60) {
+                gameState.duckDirection.x *= -1;
+            }
+            if (gameState.duckPosition.y <= 0 || gameState.duckPosition.y >= window.innerHeight - 200) {
+                gameState.duckDirection.y *= -1;
+            }
+
+            // Keep duck in bounds
+            gameState.duckPosition.x = Math.max(0, Math.min(window.innerWidth - 60, gameState.duckPosition.x));
+            gameState.duckPosition.y = Math.max(0, Math.min(window.innerHeight - 200, gameState.duckPosition.y));
+
+            duck.style.left = gameState.duckPosition.x + 'px';
+            duck.style.top = gameState.duckPosition.y + 'px';
+        }
+
+        function updateProjectiles() {
+            // Update bullets
+            gameState.bullets.forEach((bullet, index) => {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                bullet.element.style.left = bullet.x + 'px';
+                bullet.element.style.top = bullet.y + 'px';
+
+                // Check collision with duck
+                const duckRect = duck.getBoundingClientRect();
+                const bulletRect = bullet.element.getBoundingClientRect();
+                
+                if (bulletRect.left < duckRect.right && bulletRect.right > duckRect.left &&
+                    bulletRect.top < duckRect.bottom && bulletRect.bottom > duckRect.top) {
+                    
+                    // Hit duck
+                    gameState.duckHealth -= 25;
+                    gameState.score += 10;
+                    updateHUD();
+                    createExplosion(bullet.x, bullet.y);
+                    
+                    bullet.element.remove();
+                    gameState.bullets.splice(index, 1);
+                    
+                    if (gameState.duckHealth <= 0) {
+                        endGame('Hunter Wins!');
+                    }
+                    return;
+                }
+
+                // Remove if out of bounds
+                if (bullet.x < 0 || bullet.x > window.innerWidth || 
+                    bullet.y < 0 || bullet.y > window.innerHeight) {
+                    bullet.element.remove();
+                    gameState.bullets.splice(index, 1);
+                }
+            });
+
+            // Update duck projectiles
+            gameState.duckProjectiles.forEach((projectile, index) => {
+                projectile.x += projectile.vx;
+                projectile.y += projectile.vy;
+                projectile.element.style.left = projectile.x + 'px';
+                projectile.element.style.top = projectile.y + 'px';
+
+                // Check collision with hunter
+                const hunterRect = hunter.getBoundingClientRect();
+                const projectileRect = projectile.element.getBoundingClientRect();
+                const containerRect = gameContainer.getBoundingClientRect();
+                
+                if (projectileRect.left < hunterRect.right && projectileRect.right > hunterRect.left &&
+                    projectileRect.top < hunterRect.bottom && projectileRect.bottom > hunterRect.top) {
+                    
+                    // Hit hunter
+                    gameState.hunterHealth -= 20;
+                    updateHUD();
+                    createExplosion(projectile.x, projectile.y);
+                    
+                    projectile.element.remove();
+                    gameState.duckProjectiles.splice(index, 1);
+                    
+                    if (gameState.hunterHealth <= 0) {
+                        endGame('Duck Wins!');
+                    }
+                    return;
+                }
+
+                // Remove if out of bounds
+                if (projectile.x < 0 || projectile.x > window.innerWidth || 
+                    projectile.y < 0 || projectile.y > window.innerHeight) {
+                    projectile.element.remove();
+                    gameState.duckProjectiles.splice(index, 1);
+                }
+            });
+        }
+
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = (x - 30) + 'px';
+            explosion.style.top = (y - 30) + 'px';
+            gameContainer.appendChild(explosion);
+            
+            setTimeout(() => {
+                explosion.remove();
+            }, 500);
+        }
+
+        function updateHUD() {
+            document.getElementById('hunterHealth').textContent = Math.max(0, gameState.hunterHealth);
+            document.getElementById('duckHealth').textContent = Math.max(0, gameState.duckHealth);
+            document.getElementById('score').textContent = gameState.score;
+        }
+
+        function endGame(message) {
+            gameState.gameActive = false;
+            document.getElementById('gameOverText').textContent = message;
+            gameOver.style.display = 'block';
+        }
+
+        function restartGame() {
+            gameState = {
+                hunterHealth: 100,
+                duckHealth: 100,
+                score: 0,
+                gameActive: true,
+                bullets: [],
+                duckProjectiles: [],
+                duckPosition: { x: 200, y: 100 },
+                duckDirection: { x: 2, y: 1 }
+            };
+
+            // Clear all projectiles
+            document.querySelectorAll('.bullet, .duck-projectile, .explosion').forEach(el => el.remove());
+            
+            // Reset positions
+            duck.style.left = gameState.duckPosition.x + 'px';
+            duck.style.top = gameState.duckPosition.y + 'px';
+            
+            gameOver.style.display = 'none';
+            updateHUD();
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameState.gameActive) {
+                updateDuck();
+                updateProjectiles();
+                gameState.score += 1; // Survival bonus
+                updateHUD();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Duck shoots periodically
+        setInterval(() => {
+            if (gameState.gameActive && Math.random() < 0.3) {
+                duckShoot();
+            }
+        }, 1500);
+
+        // Start game
+        updateHUD();
+        gameLoop();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b374454e5ce9a95',t:'MTc2NjY1NDQ3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
